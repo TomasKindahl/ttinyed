@@ -158,10 +158,10 @@ fileDropdown = Menu(menu, tearoff=False)
 ### File > New ###
 def new_file(event=False):
     global currentFilePath, undo
-    currentFilePath = nofileOpenedString
+    currentFilePath = app.nofileOpenedString
     txt.delete(1.0,END)
     undo = [txt.get(1.0,END)]
-    window.title(appName + " - " + currentFilePath)
+    window.title(app.name + " - " + currentFilePath)
 ### File > Open ###
 def open_file(event=False):
     global currentFilePath
@@ -178,16 +178,16 @@ def open_file(event=False):
     except Exception as e:
         # print(f'Could not open file: {file}')
         messagebox.showerror("Open File Error", f"Could not open file:\n{file}\n\nError: {e}")
-        window.title(appName + "")
+        window.title(app.name + "")
 ### File > Save ###
 def save_current_file(event=False):
     global currentFilePath
-    if currentFilePath == nofileOpenedString:
+    if currentFilePath == app.nofileOpenedString:
         currentFilePath = filedialog.asksaveasfilename(filetypes = app.ftypes)
     try:
         with open(currentFilePath, 'w') as f:
             f.write(txt.get('1.0','end'))
-        window.title(appName + " - " + currentFilePath)
+        window.title(app.name + " - " + currentFilePath)
     except Exception as e:
         messagebox.showerror("Save File Error", f"Could not save file:\n{currentFilePath}\n\nError: {e}")
 ### File > Save As ###
@@ -197,7 +197,7 @@ def save_as_current_file(event=False):
     try:
         with open(currentFilePath, 'w') as f:
             f.write(txt.get('1.0','end'))
-        window.title(appName + " - " + currentFilePath)
+        window.title(app.name + " - " + currentFilePath)
     except Exception as e:
         messagebox.showerror("Save As Error", f"Could not save file:\n{currentFilePath}\n\nError: {e}")
 ### File > Exit ###
