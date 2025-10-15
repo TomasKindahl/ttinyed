@@ -1,0 +1,16 @@
+{
+  "Linux": {
+     "pathsepr": "/",
+     "pathemb": "'",
+     "shell": "xfce4-terminal --default-working-directory=",
+     "filemgr": "thunar",
+     "fontsize": 20
+  },
+  "Windows": {
+     "pathsepr": "\\",
+     "pathemb": "",
+     "shell": "start /wait cmd /k cd ",
+     "filemgr": "explorer",
+     "fontsize": 10
+  }
+}

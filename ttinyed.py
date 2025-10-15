@@ -12,34 +12,43 @@ import platform
 import os
 import sys
 import subprocess
+import json
 
 # Increas Dots Per inch so it looks sharper
 # ctypes.windll.shcore.SetProcessDpiAwareness(True)
 
 # Setup Variables
 
-appName = 'ttinyed'
-nofileOpenedString = 'New File'
+class TTinyedApp:
+    nofileOpenedString = 'New File'
+    def __init__(self):
+        self.name = 'ttinyed'
+        self.config = {}
+        with open('config.json') as fh:
+            self.config = json.load(fh)
+        self.os = platform.system()
+        self.conf = self.config[self.os]
+        self.cwd = cwd = os.getcwd()
+        self.fontsize = self.conf['fontsize']
+        self.fontfamily = "TkTextFont"
+        self.ftypes = [("Text Files","*.txt"), ("Python","*.py"),  ("Markdown","*.md"), ("Any", "*")]
 
-currentFilePath = nofileOpenedString
+app = TTinyedApp()
 
-# Viable File Types, when opening and saving files.
-fileTypes = [("Text Files","*.txt"), ("Markdown","*.md"), ("Any", "*")]
+currentFilePath = app.nofileOpenedString
 
 # Tkinter Setup
 window = Tk()
 
 # Font settings
-ffam = "TkTextFont"
-size = 20 if platform.system() == 'Linux' else 10
-dFont = tf.Font(family=ffam, size=size)
-window.option_add("*Font", (ffam, size, "normal"))
-window.option_add("*Label.Font", (ffam, size, "normal"))
+dFont = tf.Font(family=app.fontfamily, size=app.fontsize)
+window.option_add("*Font", (app.fontfamily, app.fontsize, "normal"))
+window.option_add("*Label.Font", (app.fontfamily, app.fontsize, "normal"))
 
 # Set the first column to occupy 100% of the width
 window.grid_columnconfigure(0, weight=1)
 
-window.title(appName + " - " + currentFilePath)
+window.title(app.name + " - " + currentFilePath)
 
 # Window Dimensions in Pixel
 window.geometry('1000x1250' if platform.system() == 'Linux' else '750x750')
@@ -80,6 +89,19 @@ def editDropDownHandler(action):
     # https://www.javatpoint.com/python-tkinter-text
     # https://stackoverflow.com/questions/4073468/how-do-i-get-a-selected-string-in-from-a-tkinter-text-box
 
+def callshell(wd):
+    shcmd = app.conf['shell']
+    path = app.cwd if wd == '' else wd
+    path = path.replace('/', app.conf['pathsepr'])
+    print(shcmd, path)
+    os.system(f"{shcmd}'{path}'")
+def callfilemgr(wd):
+    fmgrcmd = app.conf['filemgr']
+    path = app.cwd if wd == '' else wd
+    path = path.replace('/', app.conf['pathsepr'])
+    emb = app.conf['pathemb']
+    print(fmgrcmd, path)
+    os.system(f"{fmgrcmd} {emb}{path}{emb}")
 # Handler Function for Tools menu dropdown:
 def toolsDropDownHandler(action):
     global textsave, currentFilePath
@@ -87,15 +109,17 @@ def toolsDropDownHandler(action):
     print(action)
     if action == "shell":
         currentdir = '/'.join(currentFilePath.split('/')[0:-1])
-        subprocess.call(['xfce4-terminal', f'--working-directory={currentdir}'])
         print(f'cwd={currentdir}')
+        callshell(currentdir)
+        #subprocess.call(['xfce4-terminal', f'--working-directory={currentdir}'])
     elif action == "filemgr":
         currentdir = '/'.join(currentFilePath.split('/')[0:-1])
-        subprocess.call(['thunar', currentdir])
+        #subprocess.call(['thunar', currentdir])
         print(f'cwd={currentdir}')
+        callfilemgr(currentdir)
 
 def textchange(event):
-    window.title(appName + " - *" + currentFilePath)
+    window.title(app.name + " - *" + currentFilePath)
 
 # Widgets
 
@@ -103,7 +127,7 @@ def textchange(event):
 txt = scrolledtext.Text(window, height=40, bg='#AADDAA', wrap=WORD, width=40, font=dFont)
 txt.grid(row=1,sticky=N+S+E+W)
 
-txt.configure(font = (ffam, size, "normal"), tabs=('1c', '2c', '3c', '4c'))
+txt.configure(font = (app.fontfamily, app.fontsize, "normal"), tabs=('1c', '2c', '3c', '4c'))
 
 # Scrollbar
 yscrollbar=Scrollbar(window, orient=VERTICAL, command=txt.yview) # →
@@ -125,7 +149,7 @@ window.bind("<Configure>", resize)
 
 # Menu
 menu = Menu(window)
-menu.configure(font = (ffam, size, "normal"))
+menu.configure(font = (app.fontfamily, app.fontsize, "normal"))
 
 # set tearoff to 0
 fileDropdown = Menu(menu, tearoff=False)
@@ -141,10 +165,10 @@ def new_file(event=False):
 ### File > Open ###
 def open_file(event=False):
     global currentFilePath
-    file = filedialog.askopenfilename(filetypes = fileTypes)
+    file = filedialog.askopenfilename(filetypes = app.ftypes)
     if file == '' or file == ():
         return
-    window.title(appName + " - " + str(file))
+    window.title(app.name + " - " + str(file))
     currentFilePath = file
     try:
         with open(file, 'r') as f:
@@ -159,7 +183,7 @@ def open_file(event=False):
 def save_current_file(event=False):
     global currentFilePath
     if currentFilePath == nofileOpenedString:
-        currentFilePath = filedialog.asksaveasfilename(filetypes = fileTypes)
+        currentFilePath = filedialog.asksaveasfilename(filetypes = app.ftypes)
     try:
         with open(currentFilePath, 'w') as f:
             f.write(txt.get('1.0','end'))
@@ -169,7 +193,7 @@ def save_current_file(event=False):
 ### File > Save As ###
 def save_as_current_file(event=False):
     global currentFilePath
-    currentFilePath = filedialog.asksaveasfilename(filetypes = fileTypes)
+    currentFilePath = filedialog.asksaveasfilename(filetypes = app.ftypes)
     try:
         with open(currentFilePath, 'w') as f:
             f.write(txt.get('1.0','end'))
@@ -239,40 +263,26 @@ def key(a):
     print(f"Key {a}")
 
 # hotkey to save current file
-print('1')
 window.bind('<Control-n>', new_file)
-print('2')
 window.bind('<Control-o>', open_file)
-print('3')
 window.bind('<Control-Shift-S>', save_as_current_file)
-print('4')
 window.bind('<Control-s>', save_current_file)
-print('5')
 window.bind('<Control-q>', exit_program)
-print('6')
 
 window.bind('<Control-z>', crude_undo)
-print('7')
 window.bind('<Control-x>', cut_sel)
-print('8')
 window.bind('<Control-c>', copy_sel)
-print('9')
 window.bind('<Control-p>', paste_cut)
-print('10a')
 window.bind('<Control-a>', sel_all)
-print('10b')
 
 window.bind('<Control-Alt-s>', open_shell)
-print('15')
 window.bind('<Control-Alt-f>', open_file_manager)
-print('16')
 window.bind("<Key>", key)
-print('17')
 
 # Enabling "open with" by looking if the second argument was passed.
 if len(sys.argv) == 2:
     currentFilePath = sys.argv[1]
-    window.title(appName + " - " + currentFilePath)
+    window.title(app.name + " - " + currentFilePath)
     if os.path.isfile(currentFilePath):
         with open(currentFilePath, 'r') as f:
             txt.delete(1.0,END)
