@@ -10,5 +10,5 @@ cd ttinyed
 Start the program using: 
 
 ```
-python3 tinyed.py
+python3 ttinyed.py
 ```
